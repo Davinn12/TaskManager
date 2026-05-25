@@ -74,7 +74,7 @@ export default function Board() {
         {searchQuery && (
           <div className="mb-4 text-sm text-slate-500">
             Mostrando resultados para{" "}
-            <span className="font-semibold text-slate-700">"{searchQuery}"</span> — {filteredCount} coincidencia(s)
+            <span className="font-semibold text-slate-700">&ldquo;{searchQuery}&rdquo;</span> — {filteredCount} coincidencia(s)
             <button onClick={() => setSearchQuery("")} className="ml-2 text-blue-600 hover:underline">Limpiar</button>
           </div>
         )}
