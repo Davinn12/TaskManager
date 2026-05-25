@@ -40,7 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# archivos duplicados generados por create-next-app (usar las versiones .js/.ts)
+# archivos duplicados generados por create-next-app (next.config.mjs es el válido para Next.js 14)
 eslint.config.mjs
 postcss.config.mjs
-next.config.mjs
+next.config.ts
