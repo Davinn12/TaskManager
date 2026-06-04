@@ -1,24 +1,4 @@
-version: "3.9"
-
-# ─────────────────────────────────────────────────────────────
-#  TaskManager CI — Stack completo
-#
-#  Servicios:
-#    frontend  → Next.js       http://localhost:3000
-#    backend   → PHP + Slim    http://localhost:8080  (próxima iteración)
-#    db        → MySQL 8       localhost:3306         (próxima iteración)
-#
-#  Uso:
-#    docker-compose up           # levanta todo en primer plano
-#    docker-compose up -d        # levanta todo en segundo plano
-#    docker-compose down         # detiene y elimina los contenedores
-#    docker-compose logs -f      # ver logs en tiempo real
-#    docker-compose up --build   # reconstruir imágenes y levantar
-# ─────────────────────────────────────────────────────────────
-
 services:
-
-  # ── Base de datos ─────────────────────────────────────────
   db:
     image: mysql:8.0
     container_name: taskmanager_db
@@ -31,27 +11,23 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql        # persistencia de datos
-      # - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql  # descomentar cuando exista
-    networks:
-      - taskmanager_net
+      - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot1234"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot1234"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - taskmanager_net
 
-  # ── Backend PHP + Slim ────────────────────────────────────
   backend:
-    # image: taskmanager-backend        # descomentar cuando exista el Dockerfile del backend
-    image: php:8.2-apache               # placeholder hasta que creemos el backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: taskmanager_backend
     restart: unless-stopped
     ports:
       - "8080:80"
-    # build:
-    #   context: ./backend              # descomentar cuando exista la carpeta backend/
-    #   dockerfile: Dockerfile
     environment:
       DB_HOST: db
       DB_PORT: 3306
@@ -63,13 +39,10 @@ services:
         condition: service_healthy
     networks:
       - taskmanager_net
-    # volumes:
-    #   - ./backend:/var/www/html       # descomentar para desarrollo con hot-reload
 
-  # ── Frontend Next.js ──────────────────────────────────────
   frontend:
     build:
-      context: .                        # usa el Dockerfile de la raíz
+      context: .
       dockerfile: Dockerfile
     container_name: taskmanager_frontend
     restart: unless-stopped
@@ -77,18 +50,15 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      # NEXT_PUBLIC_API_URL: http://backend:8080   # descomentar al conectar con el backend
+      NEXT_PUBLIC_API_URL: http://localhost:8080
     depends_on:
       - backend
     networks:
       - taskmanager_net
 
-# ── Volúmenes ─────────────────────────────────────────────
 volumes:
   db_data:
-    driver: local
 
-# ── Red interna ───────────────────────────────────────────
 networks:
   taskmanager_net:
     driver: bridge
