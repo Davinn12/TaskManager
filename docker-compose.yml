@@ -1,4 +1,24 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+#  TaskManager CI — Stack completo
+#
+#  Servicios:
+#    frontend  → Next.js       http://localhost:3000
+#    backend   → PHP + Slim    http://localhost:8080
+#    db        → MySQL 8       localhost:3306
+#    jenkins   → Jenkins LTS   http://localhost:8090
+#
+#  Uso:
+#    docker-compose up           # levanta todo en primer plano
+#    docker-compose up -d        # levanta todo en segundo plano
+#    docker-compose down         # detiene y elimina los contenedores
+#    docker-compose logs -f      # ver logs en tiempo real
+#    docker-compose up --build   # reconstruir imágenes y levantar
+# ─────────────────────────────────────────────────────────────
+
 services:
+
   db:
     image: mysql:8.0
     container_name: taskmanager_db
@@ -56,8 +76,26 @@ services:
     networks:
       - taskmanager_net
 
+  # ── Jenkins CI ───────────────────────────────────────────
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: taskmanager_jenkins
+    restart: unless-stopped
+    user: root
+    ports:
+      - "8090:8080"                        # UI de Jenkins (evita conflicto con backend en 8080)
+      - "50000:50000"                      # agentes JNLP
+    volumes:
+      - jenkins_home:/var/jenkins_home     # persistencia de configuración y jobs
+      - /var/run/docker.sock:/var/run/docker.sock  # acceso a Docker del host
+    networks:
+      - taskmanager_net
+
 volumes:
   db_data:
+    driver: local
+  jenkins_home:
+    driver: local
 
 networks:
   taskmanager_net:
