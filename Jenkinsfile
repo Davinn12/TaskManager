@@ -45,7 +45,7 @@ pipeline {
         stage('5. Build imagen Docker') {
             steps {
                 dir('task-manager') {
-                    sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                    sh 'DOCKER_BUILDKIT=0 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
                 }
             }
         }
