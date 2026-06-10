@@ -56,8 +56,21 @@ services:
     networks:
       - taskmanager_net
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: taskmanager_jenkins
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - taskmanager_net
+
 volumes:
   db_data:
+  jenkins_home:
 
 networks:
   taskmanager_net:
