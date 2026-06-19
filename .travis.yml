@@ -1,0 +1,43 @@
+language: node_js
+node_js:
+  - "20"
+
+# Habilitamos Docker para el stage de imagen
+services:
+  - docker
+
+# Caché de node_modules para acelerar los builds
+cache:
+  directories:
+    - node_modules
+
+# Instalación determinista de dependencias
+install:
+  - npm ci
+
+# Etapas del pipeline
+script:
+  # 1. Lint (no bloquea el build si hay advertencias menores)
+  - npm run lint || true
+  # 2. Pruebas unitarias con Jest
+  - npm test -- --watchAll=false --passWithNoTests
+  # 3. Build de producción Next.js
+  - npm run build
+
+# Tras un build exitoso, construir la imagen Docker
+after_success:
+  - docker build -t taskmanager-frontend:travis-$TRAVIS_BUILD_NUMBER .
+  - echo "Imagen construida exitosamente en rama $TRAVIS_BRANCH (build #$TRAVIS_BUILD_NUMBER)"
+
+# Notificaciones por email solo en fallos
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+
+# Ramas que disparan el pipeline
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*/

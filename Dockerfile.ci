@@ -1,0 +1,25 @@
+# Imagen ligera para CI (Codeship Pro / cualquier runner basado en Docker)
+# Incluye todas las devDependencies necesarias para lint, test y build.
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Variables de entorno para CI
+ENV NODE_ENV=test
+ENV CI=true
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Instalar dependencias del sistema necesarias para algunos módulos nativos
+RUN apk add --no-cache libc6-compat
+
+# Copiar manifiestos primero para aprovechar caché de Docker
+COPY package.json package-lock.json ./
+
+# Instalar todas las dependencias (incluyendo devDependencies)
+RUN npm ci
+
+# Copiar el resto del codigo fuente
+COPY . .
+
+# El comando real se define en codeship-steps.yml
+CMD ["npm", "test", "--", "--watchAll=false", "--passWithNoTests"]
