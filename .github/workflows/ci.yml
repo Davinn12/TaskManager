@@ -1,6 +1,6 @@
 name: CI — TaskManager
 
-# Se ejecuta en cada push y pull request sobre las ramas principales
+#Se ejecuta en cada push y pull request sobre las ramas principales
 on:
   push:
     branches:
