@@ -62,3 +62,55 @@ jobs:
             -t taskmanager-frontend:latest \
             .
           echo "Imagen construida: taskmanager-frontend:${{ github.run_number }}"
+
+  deploy-pages:
+    name: Desplegar en GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # 1. Checkout del código
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Configurar Node.js
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # 3. Instalar dependencias
+      - name: Instalar dependencias
+        run: npm ci
+
+      # 4. Build estático para GitHub Pages (solo si las pruebas pasaron)
+      - name: Build estático
+        run: npm run build
+        env:
+          NEXT_EXPORT: "true"
+
+      # 5. Configurar GitHub Pages
+      - name: Configurar Pages
+        uses: actions/configure-pages@v4
+
+      # 6. Subir artefacto al sistema de Pages
+      - name: Subir artefacto
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+      # 7. Desplegar en GitHub Pages
+      - name: Desplegar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
