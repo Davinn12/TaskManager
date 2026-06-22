@@ -1,39 +1,58 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS-20'
+    }
+
+    environment {
+        IMAGE_NAME = 'taskmanager-frontend'
+        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+    }
+
     stages {
-        stage('Checkout') {
+
+        stage('1. Checkout') {
             steps {
-                echo 'Descargando codigo del repositorio TaskManager'
                 checkout scm
             }
         }
 
-        stage('Validar estructura del proyecto') {
+        stage('2. Instalar dependencias') {
             steps {
-                echo 'Validando archivos principales del proyecto'
-                sh 'ls -la'
-                sh 'test -f docker-compose.yml'
-                sh 'test -f Dockerfile'
-                sh 'test -d backend'
-                sh 'test -f package.json'
+                sh 'npm ci'
             }
         }
 
-        stage('Validar configuracion Docker Compose') {
+        stage('3. Pruebas unitarias') {
             steps {
-                echo 'Validando que docker-compose.yml tenga los servicios requeridos'
-                sh 'grep -q "db:" docker-compose.yml'
-                sh 'grep -q "backend:" docker-compose.yml'
-                sh 'grep -q "frontend:" docker-compose.yml'
-                sh 'grep -q "jenkins:" docker-compose.yml'
+                sh 'npm test -- --watchAll=false --passWithNoTests'
             }
         }
 
-        stage('Resultado') {
+        stage('4. Build de la aplicacion') {
             steps {
-                echo 'Pipeline ejecutado correctamente: estructura, Docker Compose y Jenkins validados.'
+                sh 'npm run build'
             }
         }
+
+        stage('5. Build imagen Docker') {
+            steps {
+                sh 'DOCKER_BUILDKIT=0 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+            }
+        }
+
+        stage('6. Despliegue (rama main)') {
+            when { branch 'main' }
+            steps {
+                sh 'docker compose up -d --build'
+            }
+        }
+    }
+
+    post {
+        always  { cleanWs() }
+        success { echo 'Pipeline completado exitosamente.' }
+        failure { echo 'Pipeline fallido. Revisar los logs.' }
     }
 }

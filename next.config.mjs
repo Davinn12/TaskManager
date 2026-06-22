@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
+const isExport = process.env.NEXT_EXPORT === "true";
+
 const nextConfig = {
-  // Genera un servidor mínimo autónomo, ideal para contenedores Docker
-  output: "standalone",
+  // Modo export para GitHub Pages; standalone para Docker
+  output: isExport ? "export" : "standalone",
+  // Ruta base del repo en GitHub Pages (solo aplica en modo export)
+  basePath: isExport ? "/task-manager" : "",
+  // Las imágenes deben desactivar optimización en export estático
+  images: {
+    unoptimized: isExport,
+  },
 };
 
 export default nextConfig;
